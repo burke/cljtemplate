@@ -1,0 +1,58 @@
+<project name="demo" default="jar">
+  <description></description>
+
+  <property name="src" location="src"/>
+  <property name="src.clj" location="src/clj"/>
+  <property name="src.java" location="src/java"/>
+  <property name="build" location="classes"/>
+  <property name="jarfile" location="${ant.project.name}.jar"/>
+  <property name="resource-gen" location="resource-gen"/>
+
+  <target name="init" depends="clean">
+    <tstamp/>
+    <mkdir dir="${build}"/>
+    <mkdir dir="${resource-gen}"/>
+  </target>
+
+  <target name="compile-java" depends="init">
+    <javac srcdir="${src.java}" destdir="${build}" includeJavaRuntime="yes"
+           debug="true" target="1.5"/>
+  </target>
+
+  <target name="generate-resources" depends="init">
+    <unjar src="libs/clojure.jar" dest="${resource-gen}"/>
+    <unjar src="libs/clojure-contrib.jar" dest="${resource-gen}"/>
+  </target>
+
+  <target name="compile-clojure" depends="init">
+    <java classname="clojure.lang.Compile">
+      <classpath>
+        <pathelement location="${build}"/>
+        <pathelement location="${src.clj}"/>
+        <pathelement location="libs/clojure.jar"/>
+        <pathelement location="libs/clojure-contrib.jar"/>
+      </classpath>
+      <sysproperty key="clojure.compile.path" value="${build}"/>
+      <!-- specify packages to include here, one per line. (ie. multiple <arg/>s) -->
+      <arg value="com.example.demo"/>
+    </java>
+  </target>
+
+  <target name="jar" depends="compile-clojure,generate-resources">
+    <jar destfile="${jarfile}">
+      <fileset dir="${build}" includes="**/*.class"/>
+      <fileset dir="${resource-gen}"/>
+      <manifest>
+        <!-- If you want your jar to have a main class, make sure you set it here. -->
+        <attribute name="Main-Class" value="com.example.demo"/>
+      </manifest>
+    </jar>
+  </target>
+
+  <target name="clean">
+    <delete dir="${build}"/>
+    <delete dir="${resource-gen}"/>
+    <delete file="${jarfile}"/>
+  </target>
+
+</project>
